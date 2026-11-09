@@ -1,582 +1,558 @@
-:root {
-  --bg1: #ffd86f;
-  --bg2: #ff7d94;
-  --bg3: #ff9960;
-  --ink: #38223a;
-  --pink: #ff4d9c;
-  --hot: #ff4e54;
-  --orange: #ff9a42;
-  --yellow: #ffe46a;
-  --cream: #fff8ef;
-  --violet: #6246ff;
-  --lavender: #efb1ff;
-  --soft-pink: #ffd5e9;
-  --shadow: 0 16px 0 rgba(141, 52, 94, 0.16), 0 28px 48px rgba(104, 39, 94, 0.18);
-  --card-shadow: 0 10px 0 rgba(156, 71, 121, 0.12), 0 18px 28px rgba(94, 34, 74, 0.15);
-}
+const questionSet = [
+  {
+    prompt: '처음 눈길이 가는 건?',
+    options: [
+      { emoji: '🪞', title: '완벽하게 다듬어진 것', sub: '디테일까지 매끈한 완성도' },
+      { emoji: '🧩', title: '처음 보는 독특한 것', sub: '조금 서툴러도 나만의 분위기' },
+    ],
+  },
+  {
+    prompt: '주말 마켓에서 딱 하나만 데려온다면?',
+    options: [
+      { emoji: '🍊', title: '모두에게 잘 어울리는 오브제', sub: '익숙하지만 안정적인 매력' },
+      { emoji: '🪩', title: '세상에 하나뿐인 오브제', sub: '다시 봐도 기억에 남는 특별함' },
+    ],
+  },
+  {
+    prompt: '친구가 만든 플레이리스트, 어떤 제목이 더 궁금해?',
+    options: [
+      { emoji: '🌷', title: '오늘을 위한 포근한 노래', sub: '마음을 편하게 해주는 익숙함' },
+      { emoji: '🛸', title: '아무도 모르는 비밀의 노래', sub: '어떤 분위기일지 상상이 안 되는 매력' },
+    ],
+  },
+  {
+    prompt: '선물 포장을 고른다면?',
+    options: [
+      { emoji: '🎀', title: '깔끔한 리본과 단정한 포장', sub: '정성스럽고 안정적인 완성' },
+      { emoji: '🧡', title: '손그림 메모가 붙은 포장', sub: '조금 삐뚤어도 진심이 느껴지는 것' },
+    ],
+  },
+  {
+    prompt: '나를 더 설레게 하는 초대장은?',
+    options: [
+      { emoji: '🌟', title: '모두가 기다리는 인기 파티', sub: '사람들이 많이 찾는 이유가 궁금해' },
+      { emoji: '🌙', title: '초대받은 사람만 아는 비밀 파티', sub: '나만 아는 특별한 순간 같아' },
+    ],
+  },
+  {
+    prompt: '마지막으로, 내 취향에 가까운 문장은?',
+    options: [
+      { emoji: '💎', title: '오래 사랑받는 클래식', sub: '시간이 지나도 좋은 건 좋은 것' },
+      { emoji: '🦋', title: '오늘 처음 만난 반짝임', sub: '새로운 느낌은 언제나 매력적' },
+    ],
+  },
+];
 
-* {
-  box-sizing: border-box;
-}
+const ratingLabels = [
+  '이 결과물이 매력적으로 느껴진다',
+  '이 결과물이 믿음직하고 완성도 있어 보인다',
+  '다른 사람에게 보여주거나 공유하고 싶다',
+  '이 결과물은 나에게 가치가 있어 보인다',
+];
 
-html, body {
-  margin: 0;
-  min-height: 100%;
-  font-family: 'Inter', 'Apple SD Gothic Neo', sans-serif;
-  background:
-    radial-gradient(circle at 15% 15%, rgba(255,255,255,0.45), transparent 18%),
-    radial-gradient(circle at 85% 18%, rgba(255,255,255,0.3), transparent 20%),
-    linear-gradient(135deg, #ffc44e 0%, #ff8d99 35%, #ff6ca8 60%, #ffb24d 100%);
-  color: var(--ink);
-}
+const STORAGE_KEY = 'heartbeat-study-responses-v3';
+const SESSION_KEY = 'heartbeat-study-session-v3';
 
-body {
-  min-height: 100vh;
-  position: relative;
-  overflow-x: hidden;
-}
+const state = {
+  consent: false,
+  condition: null,
+  step: 0,
+  answers: Array(questionSet.length).fill(null),
+  ratings: Array(ratingLabels.length).fill(null),
+};
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 0.12'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='0.7'/%3E%3C/svg%3E");
-  opacity: 0.22;
-}
+const app = document.querySelector('#app');
 
-button, input {
-  font: inherit;
-}
-
-.bg-spark {
-  position: fixed;
-  z-index: 0;
-  font-size: 32px;
-  opacity: 0.9;
-  color: rgba(255,255,255,0.8);
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-  animation: twinkle 3s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.spark-1 { top: 7%; left: 10%; }
-.spark-2 { top: 18%; right: 11%; animation-delay: 0.7s; }
-.spark-3 { bottom: 15%; left: 7%; animation-delay: 1.1s; }
-.spark-4 { bottom: 18%; right: 8%; animation-delay: 1.8s; }
-
-@keyframes twinkle {
-  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
-  50% { transform: scale(1.28) rotate(16deg); opacity: 1; }
-}
-
-.page-shell {
-  position: relative;
-  z-index: 1;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 14px;
-}
-
-.app {
-  width: min(100%, 560px);
-}
-
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 0 8px 12px;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  font-weight: 800;
-  color: #6d2348;
-}
-
-.brand-badge {
-  font-family: 'Jua', sans-serif;
-  letter-spacing: 0.04em;
-  font-size: 16px;
-}
-
-.status-pill {
-  background: rgba(255,255,255,0.45);
-  border: 1px solid rgba(255,255,255,0.8);
-  border-radius: 999px;
-  padding: 7px 10px;
-  backdrop-filter: blur(2px);
-}
-
-.card {
-  position: relative;
-  background: rgba(255, 250, 240, 0.9);
-  border: 3px solid rgba(255,255,255,0.9);
-  border-radius: 32px;
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  padding: 28px 22px 22px;
-}
-
-.card::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 10px;
-  background: linear-gradient(90deg, #ff4d9c, #ff9a42, #ffe46a, #ff4d9c);
-}
-
-.screen {
-  animation: fadeUp 0.35s ease;
-}
-
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: none;
+function loadStoredResponses() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
   }
 }
 
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: #ffe8f2;
-  border: 1px solid rgba(255, 123, 175, 0.45);
-  color: #9b4670;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.hero-sticker {
-  width: 110px;
-  height: 94px;
-  margin: 18px auto 16px;
-  display: grid;
-  place-items: center;
-  font-size: 52px;
-  border-radius: 38% 62% 58% 42% / 53% 46% 54% 47%;
-  background: linear-gradient(145deg, #ffd966, #ff9e58 45%, #ff5aa8 100%);
-  border: 4px solid rgba(255,255,255,0.9);
-  box-shadow: 0 8px 0 rgba(255,191,184,0.72), 0 18px 24px rgba(222,74,124,0.2);
-  transform: rotate(9deg);
-}
-
-.hero-title {
-  margin: 0 0 14px;
-  font-family: 'Jua', sans-serif;
-  font-size: clamp(52px, 12vw, 82px);
-  line-height: 0.9;
-  letter-spacing: -0.06em;
-  color: #ff3d8a;
-  text-shadow: 0 3px #fff, 0 8px 0 rgba(255, 186, 54, 0.7), 0 20px 28px rgba(143, 39, 72, 0.18);
-  transform: rotate(-2deg);
-}
-
-.intro-copy,
-.copy {
-  margin: 0;
-  color: #5f3d57;
-  line-height: 1.7;
-  font-size: 16px;
-}
-
-.notice-box {
-  margin-top: 18px;
-  padding: 14px 16px;
-  background: #fff0d6;
-  border: 1px dashed rgba(255, 125, 79, 0.8);
-  border-radius: 18px;
-  color: #5d3b34;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.notice-box label {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  font-weight: 700;
-}
-
-.notice-box input {
-  width: 18px;
-  height: 18px;
-  margin-top: 1px;
-  accent-color: var(--pink);
-}
-
-.ghost-copy {
-  margin-top: 12px;
-  color: #8e6e7d;
-  text-align: center;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.primary-btn,
-.secondary-btn,
-.choice,
-.rating {
-  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
-}
-
-.primary-btn, .secondary-btn {
-  border: none;
-  border-radius: 18px;
-  font-weight: 800;
-  cursor: pointer;
-  padding: 15px 18px;
-}
-
-.primary-btn {
-  width: 100%;
-  margin-top: 18px;
-  background: linear-gradient(135deg, #ff5a9d 0%, #ff7a58 58%, #ffb94b 100%);
-  color: white;
-  box-shadow: 0 8px 0 rgba(190, 59, 99, 0.7), 0 18px 28px rgba(192, 77, 121, 0.22);
-}
-
-.primary-btn:hover, .secondary-btn:hover, .choice:hover, .rating:hover {
-  transform: translateY(-2px);
-}
-
-.primary-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.secondary-btn {
-  background: #fff0f5;
-  color: #9d446e;
-}
-
-.inline-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.inline-actions .secondary-btn {
-  flex: 0 0 110px;
-}
-
-.inline-actions .primary-btn {
-  flex: 1;
-  margin-top: 0;
-}
-
-.question-index {
-  margin: 0 0 10px;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  font-weight: 800;
-  color: #d25a85;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 10px;
-  background: #f6dfe9;
-  border-radius: 999px;
-  overflow: hidden;
-  margin: 8px 0 18px;
-}
-
-.progress-bar > span {
-  display: block;
-  height: 100%;
-  width: 0;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #ff5aa8, #ff8d5b, #ffe467);
-  transition: width 0.28s ease;
-}
-
-.prompt {
-  margin: 0 0 16px;
-  font-family: 'Jua', sans-serif;
-  font-size: clamp(24px, 6vw, 32px);
-  line-height: 1.2;
-  letter-spacing: -0.03em;
-  color: var(--ink);
-}
-
-.choice-list {
-  display: grid;
-  gap: 12px;
-}
-
-.choice {
-  width: 100%;
-  display: block;
-  text-align: left;
-  border: 2px solid #f2dfe8;
-  background: #fff;
-  color: var(--ink);
-  border-radius: 18px;
-  padding: 16px 16px 15px;
-  cursor: pointer;
-  box-shadow: 0 4px 0 rgba(244, 196, 216, 0.7);
-}
-
-.choice.selected {
-  border-color: var(--pink);
-  background: #fff1f7;
-  box-shadow: 0 4px 0 rgba(255, 150, 190, 0.8), 0 0 0 3px rgba(255, 118, 170, 0.12);
-}
-
-.choice-main {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  font-size: 15px;
-}
-
-.choice-emoji {
-  font-size: 30px;
-  line-height: 1;
-}
-
-.choice-sub {
-  display: block;
-  margin-top: 6px;
-  margin-left: 40px;
-  color: #86677b;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.error-text {
-  margin-top: 12px;
-  font-size: 13px;
-  color: #b02744;
-  font-weight: 700;
-  min-height: 18px;
-}
-
-.hidden {
-  display: none !important;
-}
-
-.art-panel {
-  margin-top: 16px;
-  padding: 18px 16px 16px;
-  border-radius: 26px;
-  border: 4px solid rgba(255,255,255,0.85);
-  background:
-    radial-gradient(circle at 20% 15%, rgba(255,255,255,0.7), rgba(255,255,255,0) 18%),
-    linear-gradient(135deg, #ff75b6 0%, #ff8859 35%, #ffb05a 100%);
-  color: white;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 12px 0 rgba(228, 95, 127, 0.32);
-}
-
-.art-panel::after {
-  content: "✦ ✧";
-  position: absolute;
-  right: 16px;
-  top: 12px;
-  font-size: 18px;
-  opacity: 0.9;
-}
-
-.art-icon {
-  font-size: 60px;
-  filter: drop-shadow(0 5px 18px rgba(93, 17, 62, 0.25));
-}
-
-.art-title {
-  margin: 8px 0 0;
-  font-family: 'Jua', sans-serif;
-  font-size: 30px;
-  letter-spacing: -0.05em;
-}
-
-.art-sub {
-  margin: 6px 0 0;
-  font-size: 12px;
-  opacity: 0.95;
-}
-
-.rating-box {
-  margin-top: 16px;
-  padding: 14px 12px 12px;
-  background: #fff4fb;
-  border-radius: 18px;
-  border: 1px solid #f1d2df;
-}
-
-.rating-box p {
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #563e52;
-}
-
-.scale {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.rating {
-  border: 2px solid #f0d9e4;
-  background: #fff;
-  color: #684b66;
-  border-radius: 14px;
-  padding: 10px 6px;
-  cursor: pointer;
-  font-weight: 800;
-  font-size: 19px;
-  line-height: 1;
-}
-
-.rating span {
-  display: block;
-  margin-top: 4px;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.rating.selected {
-  background: #fff0f6;
-  border-color: #ff4d9c;
-  color: #db2d7d;
-  box-shadow: 0 3px 0 rgba(255, 123, 176, 0.6);
-}
-
-.scale-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 8px;
-  font-size: 11px;
-  color: #8b6980;
-}
-
-.debrief-box {
-  background: #fff2d5;
-  border: 1px solid rgba(255, 192, 95, 0.8);
-  padding: 16px 15px;
-  border-radius: 18px;
-  color: #563b38;
-  font-size: 14px;
-  line-height: 1.7;
-}
-
-.result-title {
-  margin: 16px 0 10px;
-  font-family: 'Jua', sans-serif;
-  font-size: clamp(32px, 8vw, 42px);
-  letter-spacing: -0.05em;
-  color: #f23e84;
-  text-align: center;
-}
-
-.result-sub {
-  margin: 0 0 18px;
-  font-size: 18px;
-  font-weight: 700;
-  text-align: center;
-  color: #7b4565;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.summary-tile {
-  padding: 14px 10px;
-  text-align: center;
-  background: #fff0f6;
-  border-radius: 16px;
-  border: 1px solid #f0d8e7;
-}
-
-.summary-tile strong {
-  display: block;
-  font-size: 26px;
-  font-weight: 800;
-  color: #e43d85;
-  font-family: 'Jua', sans-serif;
-}
-
-.summary-tile span {
-  display: block;
-  margin-top: 5px;
-  font-size: 11px;
-  color: #7a5c72;
-  font-weight: 700;
-}
-
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  font-size: 12px;
-}
-
-.admin-table th,
-.admin-table td {
-  border-bottom: 1px solid #f0d6e2;
-  padding: 8px 6px;
-  text-align: center;
-}
-
-.admin-table th {
-  color: #874b6f;
-}
-
-.admin-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 18px;
-}
-
-.admin-actions .primary-btn,
-.admin-actions .secondary-btn {
-  margin-top: 0;
-  flex: 1;
-}
-
-.server-note {
-  margin-top: 14px;
-  font-size: 12px;
-  line-height: 1.6;
-  color: #7f6777;
-}
-
-.footer-note {
-  margin-top: 16px;
-  text-align: center;
-  color: #6e3855;
-  font-size: 11px;
-  opacity: 0.85;
-}
-
-.footer-note a {
-  color: inherit;
-  text-decoration: none;
-  font-weight: 800;
-}
-
-@media (min-width: 600px) {
-  .card {
-    padding-left: 28px;
-    padding-right: 28px;
+function saveSession() {
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
+  } catch {
+    // ignore
   }
 }
+
+function restoreSession() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (saved && Array.isArray(saved.answers)) {
+      Object.assign(state, saved);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+function getCondition() {
+  const rows = loadStoredResponses();
+  const a = rows.filter((item) => item.condition === 'A').length;
+  const b = rows.filter((item) => item.condition === 'B').length;
+  return a <= b ? 'A' : 'B';
+}
+
+function setConditionIfNeeded() {
+  if (!state.condition) {
+    state.condition = getCondition();
+  }
+}
+
+function renderTopbar() {
+  const label = state.step === 0
+    ? '취향 탐험'
+    : state.step === questionSet.length + 1
+      ? '심사 단계'
+      : state.step === questionSet.length + 2
+        ? '결과 공개'
+        : `질문 ${state.step} / ${questionSet.length}`;
+
+  return `
+    <div class="topbar">
+      <span class="brand-badge">♡ HEART BEAT CLUB</span>
+      <span class="status-pill">${label}</span>
+    </div>
+  `;
+}
+
+function renderIntro() {
+  return `
+    ${renderTopbar()}
+    <section class="card">
+      <div class="screen intro-screen">
+        <div class="eyebrow">✦ 오늘의 미니 취향 테스트</div>
+        <div class="hero-sticker" aria-hidden="true">💖</div>
+        <h1 class="hero-title">나의<br>하트비트!</h1>
+        <p class="intro-copy">당신은 무엇을 가치 있다고 느끼나요?<br>마음이 먼저 반응하는 순간을 따라가 봐요.</p>
+
+        <div class="notice-box">
+          <label>
+            <input type="checkbox" id="consent-checkbox" ${state.consent ? 'checked' : ''} />
+            <span>참여 전 안내를 확인했어요. 이 활동은 연구 실험에 활용되며, 응답은 익명으로 저장됩니다. 참여는 자발적이며 언제든 창을 닫아 중단할 수 있어요.</span>
+          </label>
+        </div>
+
+        <p class="ghost-copy">약 2분 · 정답은 없어요 · 결과는 마지막에 공개돼요</p>
+        <div class="error-text hidden" id="intro-error">계속하려면 연구 참여 안내에 동의해 주세요.</div>
+        <button class="primary-btn" id="start-btn">내 취향 알아보기 →</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderQuestion(index) {
+  const question = questionSet[index];
+  const progressValue = (index / questionSet.length) * 100;
+
+  return `
+    ${renderTopbar()}
+    <section class="card">
+      <div class="screen">
+        <div class="question-index">YOUR VIBE · 0${index + 1}</div>
+        <div class="progress-bar"><span style="width:${progressValue}%"></span></div>
+        <h2 class="prompt">${question.prompt}</h2>
+        <div class="choice-list">
+          ${question.options
+            .map(
+              (option, optionIndex) => `
+                <button class="choice ${state.answers[index] === optionIndex ? 'selected' : ''}" data-question-index="${index}" data-option-index="${optionIndex}">
+                  <span class="choice-main"><span class="choice-emoji">${option.emoji}</span><span>${option.title}</span></span>
+                  <span class="choice-sub">${option.sub}</span>
+                </button>
+              `
+            )
+            .join('')}
+        </div>
+        <div class="inline-actions">
+          ${index > 0 ? '<button class="secondary-btn" id="prev-btn">← 이전</button>' : '<div></div>'}
+          <button class="primary-btn" id="next-btn" ${state.answers[index] === null ? 'disabled' : ''}>
+            ${index === questionSet.length - 1 ? '다음, 심사하러 가기' : '다음 질문 →'}
+          </button>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderJudgement() {
+  const conditionLabel = state.condition === 'A'
+    ? '🌟 아주 특별한 결과 · 상위 5%에게만'
+    : '💫 많은 사람이 공통으로 받는 결과';
+
+  return `
+    ${renderTopbar()}
+    <section class="card">
+      <div class="screen">
+        <div class="eyebrow">✦ 이제 당신이 심사위원!</div>
+        <h2 class="prompt" style="margin-top:14px;">이 결과를 마주한<br>첫 느낌은 어때요?</h2>
+        <div class="condition-box">
+          ${conditionLabel}
+        </div>
+
+        <div class="art-panel" aria-label="색감이 풍부한 하트 모양 작품">
+          <div class="art-icon">💗</div>
+          <div class="art-title">HEART GLOW</div>
+          <p class="art-sub">a little light, made of you</p>
+        </div>
+
+        <p class="ghost-copy" style="margin: 14px 0 0;">작품을 천천히 보고, 느낌을 골라주세요</p>
+
+        ${ratingLabels
+          .map(
+            (label, idx) => `
+              <div class="rating-box">
+                <p>${label}</p>
+                <div class="scale">
+                  ${[1, 2, 3, 4, 5]
+                    .map(
+                      (value) => `
+                        <button class="rating ${state.ratings[idx] === value ? 'selected' : ''}" data-rating-index="${idx}" data-value="${value}" aria-label="${value}점">
+                          ${value}
+                          <span>${value === 1 ? '낮음' : value === 5 ? '높음' : ' '}</span>
+                        </button>
+                      `
+                    )
+                    .join('')}
+                </div>
+                <div class="scale-labels"><span>그렇지 않다</span><span>정말 그렇다</span></div>
+              </div>
+            `
+          )
+          .join('')}
+
+        <div class="error-text ${state.ratings.includes(null) ? '' : 'hidden'}" id="rating-error">각 항목을 별점으로 평가해 주세요.</div>
+        <button class="primary-btn" id="finish-btn">내 취향 결과 보기 ✨</button>
+      </div>
+    </section>
+  `;
+}
+
+function getResultType() {
+  const preferenceScore = state.answers.reduce((sum, answer) => sum + (answer === 1 ? 1 : 0), 0);
+
+  if (preferenceScore >= 4) {
+    return {
+      name: '반짝임 수집가',
+      title: '새로움에 심장이 쿵!',
+      desc: '남들이 아직 발견하지 못한 매력을 알아보는 당신. 낯선 반짝임을 자기만의 감각으로 빛내는 타입이에요.',
+    };
+  }
+
+  if (preferenceScore <= 2) {
+    return {
+      name: '무드 큐레이터',
+      title: '좋은 감각은 오래 남아',
+      desc: '마음에 드는 것의 이유를 차분히 알아보는 당신. 익숙한 아름다움 속에서도 작은 차이를 발견해요.',
+    };
+  }
+
+  return {
+    name: '하트비트 믹서',
+    title: '두근거림의 균형을 아는',
+    desc: '완성도와 새로운 감각 사이를 자유롭게 오가는 당신. 상황마다 가장 잘 어울리는 가치를 골라내요.',
+  };
+}
+
+function renderResult() {
+  const result = getResultType();
+
+  return `
+    ${renderTopbar()}
+    <section class="card">
+      <div class="screen" style="text-align:center;">
+        <div class="hero-sticker" style="margin-top:4px;">✨</div>
+        <div class="eyebrow">✦ 당신의 하트비트 결과</div>
+        <h2 class="result-title">${result.name}</h2>
+        <p class="result-sub">${result.title}</p>
+        <p class="copy" style="text-align:left;">${result.desc}</p>
+
+        <div class="debrief-box" style="margin-top:18px; text-align:left;">
+          <strong>잠깐, 실험의 비밀을 공개할게요 🫧</strong><br />
+          이 테스트는 같은 작품을 보여드리면서 소개 문구만 다르게 제시해, 희소하다는 정보가 작품의 가치 판단에 어떤 영향을 주는지 알아보는 연구예요. 참가자는 무작위로 두 조건 중 하나에 배정되었고, 작품은 모든 참가자에게 동일했어요. 소개 문구는 연구를 위해 실제와 다르게 안내한 것으로, 혼란을 드렸다면 미안해요. 응답은 익명으로 기록되며 연구 목적으로만 사용됩니다.<br /><br />
+          함께해 주셔서 정말 고마워요! 💖
+        </div>
+
+        <button class="primary-btn" id="restart-btn" style="margin-top:18px;">반짝이는 하루 보내기 ♡</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderAdmin() {
+  const rows = loadStoredResponses();
+  const groupA = rows.filter((item) => item.condition === 'A');
+  const groupB = rows.filter((item) => item.condition === 'B');
+
+  const stats = ratingLabels.map((label, index) => {
+    const a = averageByGroup(groupA, index);
+    const b = averageByGroup(groupB, index);
+    return {
+      label,
+      a,
+      b,
+      diff: a !== null && b !== null ? (a - b).toFixed(2) : '—',
+    };
+  });
+
+  return `
+    ${renderTopbar()}
+    <section class="card">
+      <div class="screen">
+        <div class="eyebrow">🔒 운영자용 · 이 기기에 저장된 데이터</div>
+        <h2 class="prompt" style="margin-top:14px;">하트비트 실험 요약</h2>
+        <p class="ghost-copy" style="text-align:left; margin-top:0;">응답은 현재 브라우저의 로컬 저장소에만 저장됩니다. 공유 서버로 전송되지 않습니다.</p>
+
+        <div class="summary-grid">
+          <div class="summary-tile"><strong>${groupA.length}</strong><span>A · 희소 정보 조건</span></div>
+          <div class="summary-tile"><strong>${groupB.length}</strong><span>B · 보편 정보 조건</span></div>
+        </div>
+
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>평가 항목</th>
+              <th>A 평균</th>
+              <th>B 평균</th>
+              <th>차이</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${stats
+              .map(
+                (item) => `
+                  <tr>
+                    <td>${item.label}</td>
+                    <td>${item.a === null ? '—' : item.a.toFixed(2)}</td>
+                    <td>${item.b === null ? '—' : item.b.toFixed(2)}</td>
+                    <td>${item.diff}</td>
+                  </tr>
+                `
+              )
+              .join('')}
+          </tbody>
+        </table>
+
+        <div class="admin-actions">
+          <button class="primary-btn" id="download-csv" ${rows.length ? '' : 'disabled'}>CSV 다운로드 ↓</button>
+          <button class="secondary-btn" id="clear-data" ${rows.length ? '' : 'disabled'}>데이터 삭제</button>
+        </div>
+
+        <p class="server-note">
+          실제 연구 데이터는 보안된 서버와 관리자 인증, 서버 사이드 랜덤화가 필요합니다. 이 화면은 로컬 데모용 요약입니다.
+        </p>
+
+        <button class="secondary-btn" id="back-to-test" style="width:100%; margin-top:14px;">← 테스트로 돌아가기</button>
+      </div>
+    </section>
+  `;
+}
+
+function averageByGroup(rows, index) {
+  const values = rows
+    .map((row) => Number(row.ratings?.[index]))
+    .filter((value) => Number.isFinite(value));
+
+  if (!values.length) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function render() {
+  const url = new URL(window.location.href);
+  const isAdmin = url.searchParams.has('admin');
+
+  if (isAdmin) {
+    app.innerHTML = renderAdmin();
+    bindAdminHandlers();
+    return;
+  }
+
+  if (state.step === 0) {
+    app.innerHTML = renderIntro();
+    bindIntroHandlers();
+    return;
+  }
+
+  if (state.step >= 1 && state.step <= questionSet.length) {
+    app.innerHTML = renderQuestion(state.step - 1);
+    bindQuestionHandlers();
+    return;
+  }
+
+  if (state.step === questionSet.length + 1) {
+    app.innerHTML = renderJudgement();
+    bindJudgementHandlers();
+    return;
+  }
+
+  app.innerHTML = renderResult();
+  bindResultHandlers();
+}
+
+function bindIntroHandlers() {
+  const startBtn = document.querySelector('#start-btn');
+  const consent = document.querySelector('#consent-checkbox');
+
+  consent.addEventListener('change', (event) => {
+    state.consent = event.target.checked;
+    saveSession();
+  });
+
+  startBtn.addEventListener('click', () => {
+    const errorNode = document.querySelector('#intro-error');
+
+    if (!state.consent) {
+      errorNode.classList.remove('hidden');
+      return;
+    }
+
+    setConditionIfNeeded();
+    state.step = 1;
+    saveSession();
+    render();
+  });
+}
+
+function bindQuestionHandlers() {
+  const nextBtn = document.querySelector('#next-btn');
+  const prevBtn = document.querySelector('#prev-btn');
+
+  document.querySelectorAll('.choice').forEach((button) => {
+    button.addEventListener('click', () => {
+      const questionIndex = Number(button.dataset.questionIndex);
+      const optionIndex = Number(button.dataset.optionIndex);
+      state.answers[questionIndex] = optionIndex;
+      saveSession();
+      render();
+    });
+  });
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      const currentIndex = state.step - 1;
+      if (state.answers[currentIndex] === null) return;
+
+      state.step = Math.min(questionSet.length, state.step + 1);
+      if (state.step === questionSet.length) {
+        state.step = questionSet.length + 1;
+      }
+      saveSession();
+      render();
+    });
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      state.step -= 1;
+      saveSession();
+      render();
+    });
+  }
+}
+
+function bindJudgementHandlers() {
+  document.querySelectorAll('.rating').forEach((button) => {
+    button.addEventListener('click', () => {
+      const index = Number(button.dataset.ratingIndex);
+      const value = Number(button.dataset.value);
+      state.ratings[index] = value;
+      saveSession();
+      render();
+    });
+  });
+
+  const finishBtn = document.querySelector('#finish-btn');
+  finishBtn.addEventListener('click', () => {
+    const ratingError = document.querySelector('#rating-error');
+
+    if (state.ratings.includes(null)) {
+      ratingError.classList.remove('hidden');
+      return;
+    }
+
+    const response = {
+      id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      completedAt: new Date().toISOString(),
+      condition: state.condition,
+      answers: [...state.answers],
+      ratings: [...state.ratings],
+    };
+
+    const rows = loadStoredResponses();
+    rows.push(response);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+
+    state.step = questionSet.length + 2;
+    saveSession();
+    render();
+  });
+}
+
+function bindResultHandlers() {
+  const restartBtn = document.querySelector('#restart-btn');
+  restartBtn.addEventListener('click', () => {
+    sessionStorage.removeItem(SESSION_KEY);
+    state.step = 0;
+    state.answers = Array(questionSet.length).fill(null);
+    state.ratings = Array(ratingLabels.length).fill(null);
+    state.consent = false;
+    state.condition = null;
+    render();
+  });
+}
+
+function bindAdminHandlers() {
+  const backBtn = document.querySelector('#back-to-test');
+  const clearBtn = document.querySelector('#clear-data');
+  const downloadBtn = document.querySelector('#download-csv');
+
+  backBtn.addEventListener('click', () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('admin');
+    window.location.href = url.toString();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    if (!confirm('이 브라우저에 저장된 모든 응답을 삭제할까요?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    render();
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    const rows = loadStoredResponses();
+    const headers = ['id', 'completed_at', 'condition', ...questionSet.map((_, idx) => `preference_${idx + 1}`), ...ratingLabels.map((_, idx) => `rating_${idx + 1}`)];
+    const csvRows = [headers];
+
+    rows.forEach((row) => {
+      csvRows.push([
+        row.id,
+        row.completedAt,
+        row.condition,
+        ...row.answers,
+        ...row.ratings,
+      ]);
+    });
+
+    const csv = csvRows
+      .map((row) => row.map((value) => `"${String(value ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\r\n');
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `heartbeat-responses-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+restoreSession();
+render();
